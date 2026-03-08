@@ -1,0 +1,10 @@
+{
+    "name": "contact-share-backend",
+    "namespace": "contact-share",
+    "script": "build/server.js",
+    "node_args": "--harmony",
+    "out_file": "/home/logs/contact-share/api.log",
+    "error_file": "/home/logs/contact-share/api_error.log",
+    "interpreter": "node@22.22.0",
+    "autorestart": true
+}
