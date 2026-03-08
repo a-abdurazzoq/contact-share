@@ -1,0 +1,307 @@
+// Prisma Schema for Contact Share & Sync Application
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// User & Authentication
+// ============================================
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  phoneNumber  String?
+  passwordHash String
+  firstName    String?
+  lastName     String?
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  businessCards  BusinessCard[]
+  contacts       Contact[]
+  shareTokens    ShareToken[]
+  refreshTokens  RefreshToken[]
+  activityEvents ActivityEvent[]
+  imports        Import[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+// ============================================
+// Business Cards
+// ============================================
+
+model BusinessCard {
+  id        String   @id @default(cuid())
+  userId    String
+  firstName String
+  lastName  String?
+  position  String?
+  company   String?
+  bio       String?
+  website   String?
+  birthday  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phones BusinessCardPhone[]
+  emails BusinessCardEmail[]
+  socials BusinessCardSocial[]
+  shareTokens ShareToken[]
+  linkedContacts Contact[] @relation("LinkedCard")
+  activityEvents ActivityEvent[]
+
+  @@index([userId])
+  @@index([userId, updatedAt])
+  @@map("business_cards")
+}
+
+model BusinessCardPhone {
+  id     String @id @default(cuid())
+  cardId String
+  name   String
+  number String
+
+  card BusinessCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@index([cardId])
+  @@map("business_card_phones")
+}
+
+model BusinessCardEmail {
+  id     String @id @default(cuid())
+  cardId String
+  label  String
+  email  String
+
+  card BusinessCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@index([cardId])
+  @@map("business_card_emails")
+}
+
+model BusinessCardSocial {
+  id     String @id @default(cuid())
+  cardId String
+  name   String
+  link   String
+
+  card BusinessCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@index([cardId])
+  @@map("business_card_socials")
+}
+
+// ============================================
+// Contacts
+// ============================================
+
+enum ContactSource {
+  MANUAL
+  IMPORT
+  SCAN
+  LINK
+}
+
+enum FollowStatus {
+  NONE
+  FOLLOWING
+}
+
+model Contact {
+  id            String        @id @default(cuid())
+  ownerUserId   String
+  displayName   String
+  notes         String?
+  tags          String[]      @default([])
+  source        ContactSource @default(MANUAL)
+  linkedCardId  String?
+  followStatus  FollowStatus  @default(NONE)
+  lastSyncedAt  DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  owner        User                @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  linkedCard   BusinessCard?       @relation("LinkedCard", fields: [linkedCardId], references: [id], onDelete: SetNull)
+  phones       ContactPhone[]
+  emails       ContactEmail[]
+  socials      ContactSocial[]
+  shareTokens  ShareToken[]
+  activityEvents ActivityEvent[]
+
+  @@index([ownerUserId])
+  @@index([ownerUserId, displayName])
+  @@index([linkedCardId])
+  @@index([followStatus])
+  @@map("contacts")
+}
+
+model ContactPhone {
+  id        String @id @default(cuid())
+  contactId String
+  name      String
+  number    String
+
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([contactId])
+  @@map("contact_phones")
+}
+
+model ContactEmail {
+  id        String @id @default(cuid())
+  contactId String
+  label     String
+  email     String
+
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([contactId])
+  @@map("contact_emails")
+}
+
+model ContactSocial {
+  id        String @id @default(cuid())
+  contactId String
+  name      String
+  link      String
+
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([contactId])
+  @@map("contact_socials")
+}
+
+// ============================================
+// Share Tokens
+// ============================================
+
+enum ShareTokenType {
+  CARD
+  CONTACT
+}
+
+enum ShareTokenMode {
+  PUBLIC
+  ONE_TIME
+}
+
+model ShareToken {
+  id              String         @id @default(cuid())
+  token           String         @unique
+  type            ShareTokenType
+  mode            ShareTokenMode @default(PUBLIC)
+  targetCardId    String?
+  targetContactId String?
+  createdByUserId String
+  expiresAt       DateTime?
+  createdAt       DateTime       @default(now())
+
+  createdBy     User          @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+  targetCard    BusinessCard? @relation(fields: [targetCardId], references: [id], onDelete: Cascade)
+  targetContact Contact?      @relation(fields: [targetContactId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([targetCardId])
+  @@index([targetContactId])
+  @@map("share_tokens")
+}
+
+// ============================================
+// Activity Events
+// ============================================
+
+enum ActivityEventType {
+  CARD_SHARED
+  CONTACT_RECEIVED
+  QR_SCANNED
+  LINK_OPENED
+  CONTACT_SAVED
+}
+
+model ActivityEvent {
+  id              String            @id @default(cuid())
+  type            ActivityEventType
+  actorUserId     String?
+  targetCardId    String?
+  targetContactId String?
+  meta            Json?
+  createdAt       DateTime          @default(now())
+
+  actor         User?         @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  targetCard    BusinessCard? @relation(fields: [targetCardId], references: [id], onDelete: Cascade)
+  targetContact Contact?      @relation(fields: [targetContactId], references: [id], onDelete: Cascade)
+
+  @@index([targetCardId, createdAt])
+  @@index([actorUserId])
+  @@index([type])
+  @@map("activity_events")
+}
+
+// ============================================
+// Import
+// ============================================
+
+enum ImportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Import {
+  id           String       @id @default(cuid())
+  userId       String
+  status       ImportStatus @default(PENDING)
+  fileName     String
+  totalRecords Int          @default(0)
+  successCount Int          @default(0)
+  failedCount  Int          @default(0)
+  errors       Json?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("imports")
+}
+
+// ============================================
+// Support (for contact/support endpoint)
+// ============================================
+
+model SupportMessage {
+  id        String   @id @default(cuid())
+  subject   String
+  message   String
+  email     String?
+  userId    String?
+  createdAt DateTime @default(now())
+
+  @@map("support_messages")
+}
