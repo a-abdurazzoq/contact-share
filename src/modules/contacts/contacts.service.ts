@@ -18,8 +18,8 @@ import {
 
 type ContactWhereClause = {
     ownerUserId: string;
-    displayName?: { contains: string; mode: 'insensitive' };
-    tags?: { has: string };
+    displayName?: { contains: string };
+    tags?: { string_contains: string };
     id?: { lt: string };
 };
 
@@ -39,10 +39,10 @@ export class ContactsService {
         const whereClause: ContactWhereClause = {
             ownerUserId: userId,
             ...(query.query && {
-                displayName: { contains: query.query, mode: 'insensitive' },
+                displayName: { contains: query.query },
             }),
             ...(query.tag && {
-                tags: { has: query.tag },
+                tags: { string_contains: query.tag },
             }),
             ...(cursor && { id: { lt: cursor.id } }),
         };

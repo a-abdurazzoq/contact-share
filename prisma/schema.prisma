@@ -5,7 +5,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -14,8 +14,8 @@ datasource db {
 // ============================================
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String   @id @default(cuid()) @db.VarChar(30)
+  email        String   @unique @db.VarChar(255)
   phoneNumber  String?
   passwordHash String
   firstName    String?
@@ -36,9 +36,9 @@ model User {
 }
 
 model RefreshToken {
-  id        String   @id @default(cuid())
-  tokenHash String   @unique
-  userId    String
+  id        String   @id @default(cuid()) @db.VarChar(30)
+  tokenHash String   @unique @db.VarChar(255)
+  userId    String   @db.VarChar(30)
   expiresAt DateTime
   createdAt DateTime @default(now())
 
@@ -54,13 +54,13 @@ model RefreshToken {
 // ============================================
 
 model BusinessCard {
-  id        String   @id @default(cuid())
-  userId    String
+  id        String   @id @default(cuid()) @db.VarChar(30)
+  userId    String   @db.VarChar(30)
   firstName String
   lastName  String?
   position  String?
   company   String?
-  bio       String?
+  bio       String?  @db.Text
   website   String?
   birthday  String?
   isActive  Boolean  @default(true)
@@ -81,8 +81,8 @@ model BusinessCard {
 }
 
 model BusinessCardPhone {
-  id     String @id @default(cuid())
-  cardId String
+  id     String @id @default(cuid()) @db.VarChar(30)
+  cardId String @db.VarChar(30)
   name   String
   number String
 
@@ -93,8 +93,8 @@ model BusinessCardPhone {
 }
 
 model BusinessCardEmail {
-  id     String @id @default(cuid())
-  cardId String
+  id     String @id @default(cuid()) @db.VarChar(30)
+  cardId String @db.VarChar(30)
   label  String
   email  String
 
@@ -105,10 +105,10 @@ model BusinessCardEmail {
 }
 
 model BusinessCardSocial {
-  id     String @id @default(cuid())
-  cardId String
+  id     String @id @default(cuid()) @db.VarChar(30)
+  cardId String @db.VarChar(30)
   name   String
-  link   String
+  link   String @db.Text
 
   card BusinessCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
@@ -133,13 +133,13 @@ enum FollowStatus {
 }
 
 model Contact {
-  id            String        @id @default(cuid())
-  ownerUserId   String
+  id            String        @id @default(cuid()) @db.VarChar(30)
+  ownerUserId   String        @db.VarChar(30)
   displayName   String
-  notes         String?
-  tags          String[]      @default([])
+  notes         String?       @db.Text
+  tags          Json          @default("[]")
   source        ContactSource @default(MANUAL)
-  linkedCardId  String?
+  linkedCardId  String?       @db.VarChar(30)
   followStatus  FollowStatus  @default(NONE)
   lastSyncedAt  DateTime?
   createdAt     DateTime      @default(now())
@@ -161,8 +161,8 @@ model Contact {
 }
 
 model ContactPhone {
-  id        String @id @default(cuid())
-  contactId String
+  id        String @id @default(cuid()) @db.VarChar(30)
+  contactId String @db.VarChar(30)
   name      String
   number    String
 
@@ -173,8 +173,8 @@ model ContactPhone {
 }
 
 model ContactEmail {
-  id        String @id @default(cuid())
-  contactId String
+  id        String @id @default(cuid()) @db.VarChar(30)
+  contactId String @db.VarChar(30)
   label     String
   email     String
 
@@ -185,10 +185,10 @@ model ContactEmail {
 }
 
 model ContactSocial {
-  id        String @id @default(cuid())
-  contactId String
+  id        String @id @default(cuid()) @db.VarChar(30)
+  contactId String @db.VarChar(30)
   name      String
-  link      String
+  link      String @db.Text
 
   contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
@@ -211,13 +211,13 @@ enum ShareTokenMode {
 }
 
 model ShareToken {
-  id              String         @id @default(cuid())
-  token           String         @unique
+  id              String         @id @default(cuid()) @db.VarChar(30)
+  token           String         @unique @db.VarChar(255)
   type            ShareTokenType
   mode            ShareTokenMode @default(PUBLIC)
-  targetCardId    String?
-  targetContactId String?
-  createdByUserId String
+  targetCardId    String?        @db.VarChar(30)
+  targetContactId String?        @db.VarChar(30)
+  createdByUserId String         @db.VarChar(30)
   expiresAt       DateTime?
   createdAt       DateTime       @default(now())
 
@@ -244,11 +244,11 @@ enum ActivityEventType {
 }
 
 model ActivityEvent {
-  id              String            @id @default(cuid())
+  id              String            @id @default(cuid()) @db.VarChar(30)
   type            ActivityEventType
-  actorUserId     String?
-  targetCardId    String?
-  targetContactId String?
+  actorUserId     String?           @db.VarChar(30)
+  targetCardId    String?           @db.VarChar(30)
+  targetContactId String?           @db.VarChar(30)
   meta            Json?
   createdAt       DateTime          @default(now())
 
@@ -274,8 +274,8 @@ enum ImportStatus {
 }
 
 model Import {
-  id           String       @id @default(cuid())
-  userId       String
+  id           String       @id @default(cuid()) @db.VarChar(30)
+  userId       String       @db.VarChar(30)
   status       ImportStatus @default(PENDING)
   fileName     String
   totalRecords Int          @default(0)
@@ -296,11 +296,11 @@ model Import {
 // ============================================
 
 model SupportMessage {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @db.VarChar(30)
   subject   String
-  message   String
+  message   String   @db.Text
   email     String?
-  userId    String?
+  userId    String?  @db.VarChar(30)
   createdAt DateTime @default(now())
 
   @@map("support_messages")

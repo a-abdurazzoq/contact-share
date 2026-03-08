@@ -1,20 +1,18 @@
-version: '3.8'
-
 services:
-  postgres:
-    image: postgres:16-alpine
+  mysql:
+    image: mysql:8.0
     container_name: contact-share-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: contact_share
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: contact_share
     ports:
-      - '5432:5432'
+      - '3306:3306'
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d contact_share" ]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,10 +24,10 @@ services:
     container_name: contact-share-app
     restart: unless-stopped
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/contact_share?schema=public
+      DATABASE_URL: mysql://root:root@mysql:3306/contact_share
       JWT_ACCESS_SECRET: super-secret-access-key-change-in-production-min-32-chars
       JWT_REFRESH_SECRET: super-secret-refresh-key-change-in-production-min-32-chars
       JWT_ACCESS_EXPIRES_IN: 15m
@@ -44,4 +42,4 @@ services:
       - ./uploads:/app/uploads
 
 volumes:
-  postgres_data:
+  mysql_data:

@@ -76,7 +76,7 @@ async function main() {
             ownerUserId: user.id,
             displayName: 'John Doe',
             source: 'MANUAL',
-            tags: ['Friend', 'Developer'],
+            tags: ['Friend', 'Developer'] as any,
             notes: 'Met at tech conference',
             phones: {
                 create: [{ name: 'Mobile', number: '+1234567890' }],

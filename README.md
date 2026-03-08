@@ -18,7 +18,7 @@ Production-ready Node.js + TypeScript backend for a digital business card sharin
 - **Runtime**: Node.js 20+
 - **Language**: TypeScript
 - **Framework**: Express.js
-- **Database**: PostgreSQL 16
+- **Database**: MySQL 8.0
 - **ORM**: Prisma
 - **Authentication**: JWT (jsonwebtoken) + bcrypt
 - **Validation**: Zod
@@ -30,7 +30,7 @@ Production-ready Node.js + TypeScript backend for a digital business card sharin
 ## 🛠️ Prerequisites
 
 - Node.js 20 or higher
-- PostgreSQL 16 (or use Docker)
+- MySQL 8.0 (or use Docker)
 - npm or yarn
 
 ## 📦 Installation
@@ -137,7 +137,7 @@ http://localhost:3000/docs.json
 
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
-| `DATABASE_URL` | PostgreSQL connection string | - | ✅ |
+| `DATABASE_URL` | MySQL connection string | - | ✅ |
 | `JWT_ACCESS_SECRET` | Secret for access tokens (min 32 chars) | - | ✅ |
 | `JWT_REFRESH_SECRET` | Secret for refresh tokens (min 32 chars) | - | ✅ |
 | `JWT_ACCESS_EXPIRES_IN` | Access token expiration | `15m` | ❌ |
@@ -371,7 +371,7 @@ contact-share/
 
 ## 📊 Database Schema
 
-The application uses PostgreSQL with Prisma ORM. Key entities:
+The application uses MySQL with Prisma ORM. Key entities:
 
 - **users**: User accounts
 - **business_cards**: Digital business cards with nested phones/emails/socials
@@ -388,9 +388,9 @@ See `prisma/schema.prisma` for detailed schema.
 ### Database Connection Issues
 
 If you see "Can't reach database server":
-1. Ensure PostgreSQL is running
+1. Ensure MySQL is running
 2. Check `DATABASE_URL` in `.env`
-3. Verify PostgreSQL port (default: 5432)
+3. Verify MySQL port (default: 3306)
 
 ### Prisma Migration Errors
 
